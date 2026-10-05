@@ -1,215 +1,117 @@
-# bd - Beads
+# IQA-Beads — Interactive QA with Beads
 
-**Distributed graph issue tracker for AI agents, powered by [Dolt](https://github.com/dolthub/dolt).**
+**Live, conversational user-acceptance testing on a dependency-aware issue
+graph.** This fork is Beads plus a standalone plugin that turns it into a
+disciplined UAT workflow.
 
 **Platforms:** macOS, Linux, Windows, FreeBSD
 
-[![License](https://img.shields.io/github/license/gastownhall/beads)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/steveyegge/beads)](https://goreportcard.com/report/github.com/steveyegge/beads)
-[![Release](https://img.shields.io/github/v/release/gastownhall/beads)](https://github.com/gastownhall/beads/releases)
+[![License](https://img.shields.io/github/license/victorsalmon/IQA-beads)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gastownhall/beads)](https://goreportcard.com/report/github.com/gastownhall/beads)
 [![npm version](https://img.shields.io/npm/v/@beads/bd)](https://www.npmjs.com/package/@beads/bd)
 [![PyPI](https://img.shields.io/pypi/v/beads-mcp)](https://pypi.org/project/beads-mcp/)
 
-**Docs:** https://beads.gascity.com/
+## Foreword: why this fork exists
 
-Beads provides a persistent, structured memory for coding agents. It replaces messy markdown plans with a dependency-aware graph, allowing agents to handle long-horizon tasks without losing context.
+`bd` (Beads) is an excellent persistent issue graph for coding agents — but it
+is a tracker, not a testing discipline. It does not know what a UAT session
+is, what "awaiting user validation" means, or how to keep a human tester
+unblocked while agents fix things in the background.
 
-```mermaid
-flowchart LR
-    create["bd create<br/>new bead"] --> depgraph["dependency<br/>graph"]
-    depgraph --> ready["bd ready<br/>claimable work"]
-    ready --> claim["bd update --claim<br/>agent takes it"]
-    claim --> close["bd close<br/>work done"]
-    close -->|blockers released| ready
-    depgraph <-->|"bd dolt push / pull"| remote[("other machines<br/>and agents")]
+**IQA-Beads** adds that workflow as a standalone plugin in
+[`plugins/iqa-beads/`](plugins/iqa-beads/) (runbook source:
+[`plugins/iqa-beads/skills/`](plugins/iqa-beads/skills/), registered in
+[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)
+alongside `beads`). It works with a stock `bd` binary — no fork-specific
+patches required. What it contributes over raw Beads:
+
+- **A live session that never blocks the user** — capture each report in under
+  a minute, dispatch detached workers for fixes, merge + deploy from the
+  session, ping `REDEPLOYED` per fix. Full rigor moves to later passes, never
+  onto the tester's critical path.
+- **User status separated from worker status** — Beads `closed` means work
+  shipped; validation lives in labels (`iqa:awaiting-validation` →
+  `iqa:validated:<date>`) and flips only on the tester's explicit words.
+- **Single-writer guardrails** — embedded session DB, OS-mutex serialization,
+  workers never run `bd`, export-first close with a tracker fallback if the
+  binary is ever dropped.
+- **Close-out runbooks** — `maintain` (drift groom, testing excluded) →
+  `qa` (pipeline audit over exactly the groomed list) → `nightly-stryker`
+  (incremental mutation re-proof) → `scheduling` (live-list + fail-closed
+  gate), plus an `adapter-template` worksheet so any repo can adopt it.
+
+Say **"IQA-Beads"** (legacy alias **"IQA2"**) to start a session. Full runbook:
+[`plugins/iqa-beads/README.md`](plugins/iqa-beads/README.md).
+
+## 📦 Install
+
+```powershell
+# Windows (PowerShell 7)
+irm https://raw.githubusercontent.com/victorsalmon/IQA-beads/main/install-iqa-beads.ps1 | iex
 ```
-
-## ⚡ Quick Start
 
 ```bash
-# Install beads CLI (system-wide - don't clone this repo into your project)
-curl -fsSL https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh | bash
-
-# Initialize in YOUR project
-cd your-project
-bd init
-
-# Optional: refresh or install richer instructions for your agent
-bd setup codex    # Codex CLI - installs skill, AGENTS.md guidance, and hooks
-bd setup claude   # Claude Code - installs hooks/settings
-bd setup factory  # Factory.ai Droid - creates/updates AGENTS.md
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/victorsalmon/IQA-beads/main/scripts/install-iqa-beads.sh | bash
 ```
 
-**Note:** Beads is a CLI tool you install once and use everywhere. You don't need to clone this repository into your project.
+The installer (1) ensures `bd ≥ 0.60.0` (delegates to this repo's
+`install.ps1` / `scripts/install.sh`, else brew/npm — never auto-installs
+Go), (2) clones or fast-forward-updates this fork to `~/.iqa-beads`
+(`-Dest` / `--dest` overrides; run from a checkout to use it in place),
+(3) verifies all 6 runbooks + 5 helpers + marketplace registration, and
+(4) prints harness-wiring next steps. Dry run:
+`install-iqa-beads.ps1 -VerifyOnly` / `install-iqa-beads.sh --verify-only`.
+Touches no secrets and never mutates PATH.
 
-`bd init` creates or updates `AGENTS.md` by default so agents can discover the beads workflow, and also installs project Claude/Codex integrations unless you pass `--skip-agents` or `--stealth`. Use `bd setup --list` to see supported integrations, including `bd setup codex`, `bd setup factory`, `bd setup claude`, `bd setup mux`, `bd setup cursor`, and more. See [Agent and IDE setup](docs/getting-started/ide-setup.md).
+Manual alternative: install `bd` per [Beads in brief](#-beads-upstream-in-brief),
+clone this repo, read the adapter worksheet.
 
-Manual copy-paste is only for unsupported agents, existing projects where you cannot rerun `bd init`/`bd setup`, or custom instruction files. In those cases, run `bd onboard` and paste the printed snippet into the file your agent reads.
+## ⚡ Five-minute session
 
-If your agent is not covered by `bd setup`, add this minimal `AGENTS.md` section:
+1. Fill one adapter worksheet
+   (`plugins/iqa-beads/skills/adapter-template/SKILL.md`) for the target repo.
+2. In the target repo: `bd init --stealth` (embedded session DB, no commits).
+3. Say **"IQA-Beads"** — blocker check, tracker + graph, live capture/triage.
+4. Say **"Close"** — export → `maintain` → `qa` → one queued
+   `nightly-stryker` task → roll the list (`2A` → `2B`).
 
-```markdown
-This project uses bd (beads) for issue tracking.
+## 🔩 Beads (upstream) in brief
 
-- Run `bd prime` for workflow context and command guidance.
-- Use `bd ready`, `bd show <id>`, `bd update <id> --claim`, and `bd close <id>`.
-- Use `bd remember "insight"` for durable project facts; keep per-operator preferences in your harness's own memory.
-- Do not use markdown TODO lists for task tracking.
-```
-
-## 🛠 Features
-
-* **[Dolt](https://github.com/dolthub/dolt)-Powered:** Version-controlled SQL database with cell-level merge, native branching, and built-in sync via Dolt remotes.
-* **Agent-Optimized:** JSON output, dependency tracking, and auto-ready task detection.
-* **Zero Conflict:** Hash-based IDs (`bd-a1b2`) prevent merge collisions in multi-agent/multi-branch workflows.
-* **Compaction:** Semantic "memory decay" summarizes old closed tasks to save context window.
-* **Messaging:** Message issue type with threading (`--thread`), ephemeral lifecycle, and mail delegation.
-* **Graph Links:** `relates-to`, `duplicates`, `supersedes`, and `replies-to` for knowledge graphs.
-
-## 📖 Essential Commands
+Beads is a **distributed graph issue tracker for AI agents, powered by
+[Dolt](https://github.com/dolthub/dolt)** — persistent, structured memory that
+replaces markdown plans with a dependency-aware graph so agents survive
+long-horizon work and conversation compaction.
 
 | Command | Action |
 | --- | --- |
 | `bd ready` | List tasks with no open blockers. |
 | `bd create "Title" -p 0` | Create a P0 task. |
-| `bd update <id> --claim` | Atomically claim a task (sets assignee + in_progress). |
+| `bd update <id> --claim` | Atomically claim a task (assignee + in_progress). |
 | `bd dep add <child> <parent>` | Link tasks (blocks, related, parent-child). |
 | `bd show <id>` | View task details and audit trail. |
-| `bd prime` | Print agent workflow context and persistent memories. |
+| `bd prime` | Agent workflow context + persistent memories. |
 | `bd remember "insight"` | Store project memory that `bd prime` injects later. |
 
-## 🔗 Hierarchy & Workflow
+- **Cycle:** `create` → `ready` → `--claim` → `close` → blockers release → `ready`.
+- **Storage:** embedded Dolt by default (`.beads/`, single writer); server mode
+  for concurrent writers; cross-machine sync via `bd dolt push/pull`.
+- **Agent setup:** `bd setup codex|claude|factory|…`, or run `bd onboard` and
+  paste the snippet for unsupported agents.
 
-Beads supports hierarchical IDs for epics:
+> **Full upstream reference** — the complete Beads README, commands, storage
+> modes, schema guard, and git-free usage live at the original repository:
+> **[gastownhall/beads README](https://github.com/gastownhall/beads#readme)**.
+> Docs site: [beads.gascity.com](https://beads.gascity.com/). Everything below
+> the line in this file is a pointer, not a copy — upstream stays canonical.
 
-* `bd-a3f8` (Epic)
-* `bd-a3f8.1` (Task)
-* `bd-a3f8.1.1` (Sub-task)
+## 📝 Pointers
 
-**Stealth Mode:** Run `bd init --stealth` to use Beads locally without committing files to the main repo. Perfect for personal use on shared projects. See [Git-Free Usage](#-git-free-usage) below.
-
-**Contributor vs Maintainer:** When working on open-source projects:
-
-* **Contributors** (forked repos): Run `bd init --contributor` to route planning issues to a separate repo (e.g., `~/.beads-planning`). Keeps experimental work out of PRs.
-* **Maintainers** (write access): Beads auto-detects maintainer role via SSH URLs or HTTPS with credentials. Only need `git config beads.role maintainer` if using GitHub HTTPS without credentials but you have write access.
-
-## 📦 Installation
-
-```bash
-brew install beads           # macOS / Linux (recommended)
-npm install -g @beads/bd     # Node.js users
-```
-
-**Other methods:** [install script](docs/getting-started/installation.md#quick-install-script-all-platforms) | [go install](docs/getting-started/installation.md#a-note-on-go-install-capability) | [from source](docs/getting-started/installation.md#build-dependencies-contributors-only) | [Windows](docs/getting-started/installation.md#windows-11) | [Arch AUR](docs/getting-started/installation.md#linux)
-
-**Requirements:** macOS, Linux, Windows, or FreeBSD. See [docs/getting-started/installation.md](docs/getting-started/installation.md) for complete installation guide.
-
-**Upgrading?** Replacing the binary is not always the whole story. Short
-version: sync remote-backed databases with your current `bd`, back up with
-`bd export --all`, upgrade the binary, then run `bd info --whats-new`,
-`bd hooks install`, and `bd version`. If the upgrade crosses a schema
-migration on a remote-backed database, exactly one designated clone runs
-`bd migrate` and `bd dolt push`; other clones install the new binary
-and run `bd bootstrap`. See the full
-[upgrade guide](https://beads.gascity.com/getting-started/upgrading)
-or [docs/getting-started/installation.md](docs/getting-started/installation.md#updating-bd).
-
-### Security And Verification
-
-Before trusting any downloaded binary, verify its checksum against the release `checksums.txt`.
-
-The install scripts verify release checksums before install. For manual installs, do this verification yourself before first run.
-
-On macOS, `scripts/install.sh` preserves the downloaded signature by default. Local ad-hoc re-signing is explicit opt-in via `BEADS_INSTALL_RESIGN_MACOS=1`.
-
-See [docs/reference/antivirus.md](docs/reference/antivirus.md) for Windows AV false-positive guidance and verification workflow.
-
-## 💾 Storage Modes
-
-Beads uses [Dolt](https://github.com/dolthub/dolt) as its database. Two modes:
-
-- **Embedded (default)** — `bd init`. Dolt runs in-process, data lives in
-  `.beads/embeddeddolt/`, single writer. Recommended for most users.
-- **Server** — `bd init --server`. Connects to an external `dolt sql-server`
-  for multiple concurrent writers; data lives in `.beads/dolt/`.
-
-Cross-machine sync uses `bd dolt push` / `bd dolt pull` against
-`refs/dolt/data` on your git remote; `.beads/issues.jsonl` is an export for
-viewers and interchange, not the source of truth or a backup. Back up and
-migrate between modes with `bd backup`; reclaim space with `bd prune` /
-`bd purge`.
-
-Full detail — connection flags, sockets, maintenance, backup, and migration —
-in the [Dolt backend guide](docs/architecture/dolt.md).
-
-### Schema Version Guard
-
-`bd` checks the database schema version at open time. If the database has been
-migrated by a newer binary and an older binary tries to open it, `bd` exits
-with an actionable error rather than issuing queries that fail with cryptic SQL
-errors:
-
-````
-schema version mismatch: database is at v45, binary knows up to v42 (3 migrations ahead)
-
-  Your bd binary is stale. Queries for dropped or renamed columns will fail
-  with cryptic SQL errors (e.g. "column X could not be found in any table in scope").
-
-  Rebuild from main:
-    CGO_ENABLED=0 go build -tags gms_pure_go ./cmd/bd
-
-  Or install the latest release:
-    CGO_ENABLED=0 go install -tags gms_pure_go github.com/steveyegge/beads/cmd/bd@latest
-
-  To proceed despite the risk (some read commands may still work):
-    BD_IGNORE_SCHEMA_SKEW=1 bd <command>
-    bd --ignore-schema-skew <command>
-````
-
-**When this fires:** only when the database schema is *ahead* of the binary
-(a newer binary migrated the database; this binary doesn't know those
-migrations). Normal upgrades, where the binary migrates the database forward,
-are unaffected.
-
-**Escape hatch:** `BD_IGNORE_SCHEMA_SKEW=1` (or `--ignore-schema-skew`) bypasses
-the guard with a warning on stderr. Use this only if you know the forward
-migrations are additive and safe for your specific workload.
-
-## 🌐 Community Tools
-
-See [docs/community-tools.md](docs/community-tools.md) for a curated list of community-built UIs, extensions, and integrations—including terminal interfaces, web UIs, editor extensions, and native apps.
-
-See [docs/related-projects.md](docs/related-projects.md) for adjacent or complementary projects that solve different problems in the same neighborhood.
-
-## 🚀 Git-Free Usage
-
-Beads works without git. The Dolt database is the storage backend — git
-integration (hooks, repo discovery, identity) is optional.
-
-```bash
-# Initialize without git
-export BEADS_DIR=/path/to/your/project/.beads
-bd init --quiet --stealth
-
-# All core commands work with zero git calls
-bd create "Fix auth bug" -p 1 -t bug
-bd ready --json
-bd update bd-a1b2 --claim
-bd prime
-bd close bd-a1b2 "Fixed"
-```
-
-`BEADS_DIR` tells bd where to put the `.beads/` database directory,
-bypassing git repo discovery. `--stealth` sets `no-git-ops: true` in
-config, disabling all git hook installation and git operations.
-
-This is useful for:
-- **Non-git VCS** (Sapling, Jujutsu, Piper) — no `.git/` directory needed
-- **Monorepos** — point `BEADS_DIR` at a specific subdirectory
-- **CI/CD** — isolated task tracking without repo-level side effects
-- **Evaluation/testing** — ephemeral databases in `/tmp`
-
-## 📝 Documentation
-
-* [Documentation site](https://beads.gascity.com/) | [Installing](docs/getting-started/installation.md) | [Sync Concepts](docs/core-concepts/sync-concepts.md) | [Agent Workflow](AGENT_INSTRUCTIONS.md) | [Copilot CLI Setup](docs/integrations/copilot-cli.md) | [Copilot VS Code MCP](docs/integrations/github-copilot.md) | [Articles](ARTICLES.md) | [Sync Branch Mode](docs/reference/protected-branches.md) | [Troubleshooting](docs/reference/troubleshooting.md) | [FAQ](docs/reference/faq.md)
-* [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gastownhall/beads)
+- IQA-Beads runbooks: [`plugins/iqa-beads/`](plugins/iqa-beads/)
+- Upstream README: [gastownhall/beads](https://github.com/gastownhall/beads#readme)
+- Upstream install guide:
+  [`docs/getting-started/installation.md`](docs/getting-started/installation.md) |
+  Agent workflow: [`AGENT_INSTRUCTIONS.md`](AGENT_INSTRUCTIONS.md) |
+  Troubleshooting: [`docs/reference/troubleshooting.md`](docs/reference/troubleshooting.md)
+- Contributing to the `bd` core: [`CONTRIBUTING.md`](CONTRIBUTING.md);
+  IQA-Beads plugin changes are welcome here on this fork.

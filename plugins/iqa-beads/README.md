@@ -8,6 +8,9 @@ This plugin is standalone: it builds on the `beads` plugin's `bd` CLI and adds
 the session discipline, tracker semantics, and close-out runbooks that make
 Beads usable for human-driven testing without blocking the user.
 
+Install via the repo root: `install-iqa-beads.ps1` (Windows) or
+`scripts/install-iqa-beads.sh` (macOS/Linux) — see the root README.
+
 ## Layout (one central skills dir)
 
 ```
