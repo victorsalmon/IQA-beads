@@ -8,6 +8,10 @@ This plugin is standalone: it builds on the `beads` plugin's `bd` CLI and adds
 the session discipline, tracker semantics, and close-out runbooks that make
 Beads usable for human-driven testing without blocking the user.
 
+License: MIT ([root LICENSE](../../LICENSE)) — upstream copyright
+(`Beads Contributors`) retained; fork attribution lives in the root
+README and [FORK.yaml](../../FORK.yaml).
+
 Install via the repo root: `install-iqa-beads.ps1` (Windows) or
 `scripts/install-iqa-beads.sh` (macOS/Linux) — see the root README.
 

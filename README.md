@@ -1,7 +1,7 @@
 # IQA-Beads — Interactive QA with Beads
 
 **Live, conversational user-acceptance testing on a dependency-aware issue
-graph.** This fork is Beads plus a standalone plugin that turns it into a
+graph.** This community fork is Beads plus a standalone plugin that turns it into a
 disciplined UAT workflow.
 
 **Platforms:** macOS, Linux, Windows, FreeBSD
@@ -57,7 +57,8 @@ curl -fsSL https://raw.githubusercontent.com/victorsalmon/IQA-beads/main/scripts
 
 The installer (1) ensures `bd ≥ 0.60.0` (delegates to this repo's
 `install.ps1` / `scripts/install.sh`, else brew/npm — never auto-installs
-Go), (2) clones or fast-forward-updates this fork to `~/.iqa-beads`
+Go; fetched binaries are upstream's releases, checksum-verified — this fork
+publishes none), (2) clones or fast-forward-updates this fork to `~/.iqa-beads`
 (`-Dest` / `--dest` overrides; run from a checkout to use it in place),
 (3) verifies all 6 runbooks + 5 helpers + marketplace registration, and
 (4) prints harness-wiring next steps. Dry run:
@@ -105,9 +106,29 @@ long-horizon work and conversation compaction.
 > Docs site: [beads.gascity.com](https://beads.gascity.com/). Everything below
 > the line in this file is a pointer, not a copy — upstream stays canonical.
 
+## Attribution
+
+- **Upstream:** [Beads](https://github.com/gastownhall/beads) by
+  [Steve Yegge](https://github.com/steveyegge) and contributors —
+  "a memory upgrade for your coding agent" (MIT). Copyright
+  `(c) 2025 Beads Contributors`; [`LICENSE`](LICENSE) is retained
+  unmodified, as are `THIRD_PARTY_LICENSES` and all upstream copyright
+  notices. The "Beads in brief" section above is a paraphrased summary
+  with attribution, not a copy.
+- **This fork** is unofficial and community-maintained — not affiliated
+  with or endorsed by upstream. It adds, and only adds:
+  1. `plugins/iqa-beads/` — the IQA-Beads runbooks, helpers, and manifest;
+  2. `install-iqa-beads.ps1` + `scripts/install-iqa-beads.sh`;
+  3. this README and [`FORK.yaml`](FORK.yaml) (machine-readable provenance).
+  No changes to the `bd` core.
+- **Routing issues:** `bd` core bugs belong upstream — please file them at
+  [gastownhall/beads](https://github.com/gastownhall/beads/issues).
+  IQA-Beads plugin, installer, and README issues belong here.
+
 ## 📝 Pointers
 
 - IQA-Beads runbooks: [`plugins/iqa-beads/`](plugins/iqa-beads/)
+- Fork provenance: [`FORK.yaml`](FORK.yaml)
 - Upstream README: [gastownhall/beads](https://github.com/gastownhall/beads#readme)
 - Upstream install guide:
   [`docs/getting-started/installation.md`](docs/getting-started/installation.md) |
