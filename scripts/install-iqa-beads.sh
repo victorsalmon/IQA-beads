@@ -8,10 +8,10 @@
 # IMPORTANT: This script must be EXECUTED, never SOURCED.
 #
 # What it does:
-#   1. Ensures the `bd` CLI is installed (delegates to this repo's
-#      scripts/install.sh, else brew/npm, else fails with instructions).
-#   2. Clones (or fast-forward-updates) this fork to --dest (default ~/.iqa-beads).
-#      When run from inside a fork checkout, that checkout IS the source.
+#   1. Ensures the `bd` CLI is installed (upstream release via brew/npm —
+#      this repo vendors no bd core and never auto-installs Go).
+#   2. Clones (or fast-forward-updates) this repo to --dest (default ~/.iqa-beads).
+#      When run from inside a repo checkout, that checkout IS the source.
 #   3. Verifies: bd version floor, all runbooks + helpers present, marketplace
 #      registration names iqa-beads.
 #   4. Prints harness-wiring next steps. Touches no secrets, no PATH mutation.
@@ -23,7 +23,6 @@ MIN_BD="0.60.0"
 DEST="${HOME}/.iqa-beads"
 BRANCH="main"
 SKIP_BD=0
-FROM_SOURCE=0
 VERIFY_ONLY=0
 FAILURES=0
 
@@ -33,7 +32,7 @@ log_missing() { echo -e "    \033[0;31mMISSING:\033[0m $1" >&2; FAILURES=$((FAIL
 die()         { echo -e "\033[0;31mError:\033[0m $1" >&2; exit 1; }
 
 usage() {
-    echo "Usage: install-iqa-beads.sh [--dest DIR] [--branch NAME] [--skip-bd] [--from-source] [--verify-only]"
+    echo "Usage: install-iqa-beads.sh [--dest DIR] [--branch NAME] [--skip-bd] [--verify-only]"
 }
 
 while [ $# -gt 0 ]; do
@@ -41,7 +40,6 @@ while [ $# -gt 0 ]; do
         --dest)        DEST="$2"; shift 2 ;;
         --branch)      BRANCH="$2"; shift 2 ;;
         --skip-bd)     SKIP_BD=1; shift ;;
-        --from-source) FROM_SOURCE=1; shift ;;
         --verify-only) VERIFY_ONLY=1; shift ;;
         -h|--help)     usage; exit 0 ;;
         *)             die "Unknown flag: $1 (see --help)" ;;
@@ -52,7 +50,7 @@ ver_ge() { # ver_ge HAVE NEED → true if HAVE >= NEED
     [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" = "$2" ]
 }
 
-is_checkout() { [ -f "$1/plugins/iqa-beads/skills/iqa-beads/SKILL.md" ]; }
+is_checkout() { [ -f "$1/skills/iqa-beads/SKILL.md" ]; }
 
 resolve_bd() {
     # PATH first, then well-known locations: a fresh install lands on disk
@@ -85,22 +83,14 @@ ensure_bd() {
         log_missing "bd not found (verify-only)"
         return 0
     fi
-    if [ "${FROM_SOURCE}" = "1" ]; then
-        is_checkout "${root}" || die "--from-source needs a fork checkout (clone first, or run from inside one)."
-        command -v go >/dev/null 2>&1 || die "Go 1.24+ is required for --from-source and was not found."
-        log_info "Building bd from fork source..."
-        (cd "${root}" && go build -o "${HOME}/go/bin/bd" ./cmd/bd)
-    elif is_checkout "${root}"; then
-        log_info "Installing bd via this repo scripts/install.sh (release + checksum)..."
-        bash "${root}/scripts/install.sh"
-    elif command -v brew >/dev/null 2>&1; then
+    if command -v brew >/dev/null 2>&1; then
         log_info "Installing bd via Homebrew..."
         brew install beads
     elif command -v npm >/dev/null 2>&1; then
         log_info "Installing bd via npm (@beads/bd)..."
         npm install -g "@beads/bd"
     else
-        die "bd not found. Install it first: brew install beads, npm install -g @beads/bd, or run from a fork checkout."
+        die "bd not found. Install it first: brew install beads or npm install -g @beads/bd."
     fi
     bin="$(resolve_bd || true)"
     [ -n "${bin}" ] || die "bd install did not land anywhere expected. Restart the shell and re-run with --skip-bd."
@@ -130,7 +120,7 @@ sync_plugin() {
         git -C "${DEST}" checkout "${BRANCH}" >/dev/null
         git -C "${DEST}" pull --ff-only origin "${BRANCH}" >/dev/null
     else
-        log_info "Cloning fork (${BRANCH}) to ${DEST}..."
+        log_info "Cloning plugin repo (${BRANCH}) to ${DEST}..."
         git clone --branch "${BRANCH}" "${REPO_URL}" "${DEST}" >/dev/null
     fi
     echo "${DEST}"
@@ -139,19 +129,19 @@ sync_plugin() {
 verify_plugin() {
     local root="$1" rel
     for rel in \
-        "plugins/iqa-beads/skills/iqa-beads/SKILL.md" \
-        "plugins/iqa-beads/skills/iqa-beads/REFERENCE.md" \
-        "plugins/iqa-beads/skills/adapter-template/SKILL.md" \
-        "plugins/iqa-beads/skills/maintain/SKILL.md" \
-        "plugins/iqa-beads/skills/qa/SKILL.md" \
-        "plugins/iqa-beads/skills/nightly-stryker/SKILL.md" \
-        "plugins/iqa-beads/skills/scheduling/SKILL.md" \
-        "plugins/iqa-beads/scripts/Resolve-Iqa2Bd.ps1" \
-        "plugins/iqa-beads/scripts/Use-Iqa2DbLock.ps1" \
-        "plugins/iqa-beads/scripts/Invoke-Iqa2BeadsInit.ps1" \
-        "plugins/iqa-beads/scripts/Get-Iqa2Ready.ps1" \
-        "plugins/iqa-beads/scripts/Export-Iqa2Beads.ps1" \
-        "plugins/iqa-beads/.claude-plugin/plugin.json" \
+        "skills/iqa-beads/SKILL.md" \
+        "skills/iqa-beads/REFERENCE.md" \
+        "skills/adapter-template/SKILL.md" \
+        "skills/maintain/SKILL.md" \
+        "skills/qa/SKILL.md" \
+        "skills/nightly-stryker/SKILL.md" \
+        "skills/scheduling/SKILL.md" \
+        "scripts/Resolve-Iqa2Bd.ps1" \
+        "scripts/Use-Iqa2DbLock.ps1" \
+        "scripts/Invoke-Iqa2BeadsInit.ps1" \
+        "scripts/Get-Iqa2Ready.ps1" \
+        "scripts/Export-Iqa2Beads.ps1" \
+        ".claude-plugin/plugin.json" \
         ".claude-plugin/marketplace.json" \
     ; do
         if [ -f "${root}/${rel}" ]; then log_ok "${rel}"; else log_missing "${rel}"; fi
@@ -173,8 +163,8 @@ verify_plugin "${ROOT}"
 if [ "${FAILURES}" -gt 0 ]; then die "Verification failed with ${FAILURES} missing item(s)."; fi
 echo ""
 echo -e "\033[0;32mDone. Next steps:\033[0m"
-echo "  1. Fill one adapter worksheet: ${ROOT}/plugins/iqa-beads/skills/adapter-template/SKILL.md"
+echo "  1. Fill one adapter worksheet: ${ROOT}/skills/adapter-template/SKILL.md"
 echo "  2. In the target repo: bd init --stealth  (embedded session DB, no commits)"
 echo "  3. Claude Code: /plugin marketplace add <dest>  (dest = the path above)"
-echo "  4. Other harnesses: point a skill pointer at <dest>/plugins/iqa-beads/skills/<skill>/SKILL.md"
+echo "  4. Other harnesses: point a skill pointer at <dest>/skills/<skill>/SKILL.md"
 echo '  5. Say "IQA-Beads" to start a live UAT session.'
