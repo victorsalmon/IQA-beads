@@ -140,10 +140,10 @@ READY / DEGRADED / BLOCKED), plus:
   `Close IQA-Beads session`): Step-0 export, then the `maintain` skill, then
   the `qa` skill fed by the Maintain report verbatim, then queue exactly one
   `nightly-stryker` task via `scheduling`, then roll the list (`2A` → `2B`).
-- **Catch-up** (half of Close): session-owned deploy-verify first, then one
-  detached Maintain+QA worker over validated-terminal items only — no nightly
-  queue, no list roll, no validation flips. The worker's goal is leaving the
-  codebase better than found (Maintain: changes-scoped staleness sweep,
+- **Catch-up** (half of Close): session-owned deploy-verify first, then Tidy,
+  then one detached Maintain+QA worker over validated-terminal items only —
+  no nightly queue, no list roll, no validation flips. The worker's goal is
+  leaving the codebase better than found (Tidy: RW-safe hygiene first;
   everything except testing; QA: test accuracy rebuild); a better-direction
   verdict escalates as a Trade-Offs Tipping Point — relayed to the user, new
   lane only with permission. Normative scope: [REFERENCE.md](REFERENCE.md) →

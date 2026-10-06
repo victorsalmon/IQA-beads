@@ -175,9 +175,13 @@ fallback mode it IS the queue.
   stay session-side.
 - **Port-forward keeps bead ids.** Carried beads keep their `2X-` IDs and gain
   `iqa:carried-into=<next>`; only new reports mint numbers in the open epic.
-- **Catch-up runs two steps with one goal: leave the codebase better than it
-  was found.** It executes the sibling `maintain` and `qa` skills (never
-  restated here), scoped as follows:
+- **Catch-up runs Tidy first, then the two steps, with one goal: leave the
+  codebase better than it was found.** It executes the sibling `tidy`,
+  `maintain` and `qa` skills (never restated here), scoped as follows:
+  - **Tidy first** (`salmon-run` tidy skill: RW-safe hygiene — red-state
+    triage, branch consolidation, orphan sweep, docs neatness, style
+    standard, Paseo retirement; foreign lane paths untouched). Tidying
+    first means Maintain and QA work on the clean tree, not around debris.
   - **Maintain — staleness sweep, everything except testing.** Scope derives
     from the session's changes: check the most likely locations first
     (callers, registries, docs, mirrors, indexes), then sweep the codebase
