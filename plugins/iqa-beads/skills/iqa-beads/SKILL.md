@@ -144,6 +144,62 @@ READY / DEGRADED / BLOCKED), plus:
   detached Maintain+QA worker over validated-terminal items only — no nightly
   queue, no list roll, no validation flips.
 
+## Dispatcher mode
+
+An alternative to the interactive dual-lane session for clearing a whole
+list: the session acts as a **dispatcher** — it mints beads, dispatches
+detached lane agents per unblocked bead, reviews their work, and lands it
+(session merges, deploys, closes). The session itself does no build work
+except merges, gates, secrets handling, and host operations lanes cannot own.
+
+- **Session owns beads/merge/deploy/close.** Lanes never merge to trunk,
+  never deploy, never run `bd` (create/claim/close/label all session-side),
+  never self-certify. Claim (`bd update <id> --claim`) + comment (lane
+  agent id, branch, scope) at dispatch.
+- **One lane per bead, cap 6 concurrent.** Overflow stays queued with
+  blockers named. One lane may cover several beads with separate commits
+  per bead; keep hunks tight.
+- **Lane briefs carry:** bead IDs + `bd show` instruction, exact file
+  pointers from recon, what NEVER to do (merge/deploy/close, prod writes,
+  secrets in repo/chat), test requirements, and the terse final-report
+  format (results with numbers, commit SHAs, unfinished items).
+- **Three-phase separation — one bead, three different agents.** The
+  dispatcher runs every bead through recon (read-only: symptom → root
+  cause → blast radius → file pointers + test plan, no product code),
+  then code/build (implements the recon plan only; focused tests; never
+  merges/deploys/closes), then review (a different agent than the first
+  two: verifies against acceptance + visible proof, re-runs gates,
+  ACCEPT/REJECT with reasons; max 2 build iterations, then escalate).
+  Exception: typo/config-tweak-class changes may combine recon+code with
+  dispatcher-recorded justification — review is always separate.
+- **Visible-proof acceptance.** Every bead's acceptance names the
+  user-visible proof: route + what renders + what disappears, verified in
+  a browser (signed-in where auth-gated) by someone other than the lane
+  author. Test-shaped criteria alone ("suite X green") never close a UI
+  bead. (Learned the hard way: a lane once built a new rail component,
+  tested it in isolation, passed gates, and closed — while the page kept
+  rendering the old rail, because no criterion required the wiring.)
+- **Deployed-before-awaiting.** A bead takes `iqa:awaiting-validation` only
+  when its merge is proven inside the deployed artifact, never on "merged
+  to trunk" alone.
+- **Completion is the default.** Lanes satisfice ("mostly done" + follow-ups).
+  The brief carries the definition of done as a mechanical checklist (code +
+  tests, named suites green, typecheck clean, branch pushed, evidence
+  pasted), ends with a built-in second pass ("re-read each acceptance
+  criterion, verify every box with evidence, complete anything unverified
+  NOW"), and reserves NOT Finished for external blockers only (operator
+  input, another bead, missing secret — with owner and what's needed).
+  Leftovers completable inside the lane get re-prompted to the same agent
+  once before partial is accepted.
+- **Lanes rebase onto trunk before finishing.** A lane that branched hours
+  ago discovers conflicts in-lane (author context lives there), not in the
+  session merge queue: every brief carries "rebase onto origin/trunk (or
+  merge it in) before the final test run and push."
+- **Concurrent sessions.** Check the live site + trunk log before host-level
+  work (a gate window fits a whole parallel lane); never touch another
+  session's lanes/branches/worktrees/bead content; renumber on ID collision
+  with notes on both beads; clean up host orphans you created.
+
 ## Scripts
 
 | Script | Purpose |

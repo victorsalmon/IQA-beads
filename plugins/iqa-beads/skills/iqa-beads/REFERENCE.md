@@ -194,3 +194,12 @@ applies unchanged; the bullets below are the Beads deltas:
   worker's report can name the exact bead without touching `bd`.
 - **Overflow queues as unclaimed beads** (tracker `open/queued` with blocker
   named + unclaimed open beads until a lane frees).
+- **Three phases, three different agents (dispatcher mode).** Recon plans,
+  code implements the recon plan, review re-proves against acceptance — the
+  reviewer is never the author. The session gates each handoff and merges /
+  deploys / closes only on review ACCEPT.
+- **Visible proof is part of acceptance.** Review checks route + renders +
+  gone in a browser (signed-in where auth-gated); green suites alone never
+  close a UI bead.
+- **Awaiting means deployed.** `iqa:awaiting-validation` asserts the merge is
+  inside the deployed artifact, proven by the reviewer — not merely on trunk.
