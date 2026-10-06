@@ -189,8 +189,8 @@ except merges, gates, secrets handling, and host operations lanes cannot own.
   to trunk" alone.
 - **Completion is the default.** Lanes satisfice ("mostly done" + follow-ups).
   The brief carries the definition of done as a mechanical checklist (code +
-  tests, named suites green, typecheck clean, branch pushed, evidence
-  pasted), ends with a built-in second pass ("re-read each acceptance
+  tests, named suites green, typecheck clean, owning docs diffed, branch
+  pushed, evidence pasted), ends with a built-in second pass ("re-read each acceptance
   criterion, verify every box with evidence, complete anything unverified
   NOW"), and reserves NOT Finished for external blockers only (operator
   input, another bead, missing secret — with owner and what's needed).
