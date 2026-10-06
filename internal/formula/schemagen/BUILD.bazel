@@ -1,8 +1,0 @@
-load("@rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "schemagen",
-    srcs = ["schemagen.go"],
-    importpath = "github.com/steveyegge/beads/internal/formula/schemagen",
-    visibility = ["//:__subpackages__"],
-)

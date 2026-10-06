@@ -15,12 +15,14 @@ fork:
     name: "IQA-Beads"
     purpose: "Beads plus a standalone Interactive-QA plugin: live UAT sessions
       on the issue graph with Maintain / QA / nightly-mutation / scheduling runbooks."
-    changes: "Added plugins/iqa-beads (6 runbooks, 1 reference, 5 helpers,
-      manifest), root installers (install-iqa-beads.ps1,
-      scripts/install-iqa-beads.sh), FORK.yaml, and rewrote README.
-      No changes to the bd core."
+    changes: "Slimmed to plugin-only 2026-10-06 (Go bd core removed; repo
+      ships skills/, scripts/, assets/, installers, and manifests only).
+      Full pre-slim history retained in git."
     maintainer: "Victor Salmon (https://github.com/victorsalmon)"
     created: "2026-10-05"
   upstream_sync:
-    status: "one-time-fork"
+    status: "binary-dependency"
+    note: "bd consumed as an upstream release binary (npm @beads/bd /
+      brew install beads); no vendored core since the 2026-10-06 slim.
+      commit_hash below is the original one-time-fork point."
     commit_hash: "a93498c81f629da9a364cc9fd983bbab2dad0958"

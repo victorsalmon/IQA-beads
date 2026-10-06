@@ -1,0 +1,20 @@
+{
+  "name": "iqa-beads",
+  "description": "Beads-backed Interactive Quality Assurance: live UAT sessions on a dependency-aware issue graph, with disciplined Maintain, QA, nightly-mutation, and scheduling runbooks.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Victor Salmon",
+    "url": "https://github.com/victorsalmon"
+  },
+  "repository": "https://github.com/victorsalmon/IQA-beads",
+  "license": "MIT",
+  "homepage": "https://github.com/victorsalmon/IQA-beads",
+  "keywords": [
+    "issue-tracking",
+    "quality-assurance",
+    "uat",
+    "mutation-testing",
+    "ai-workflow"
+  ],
+  "skills": "./skills/"
+}

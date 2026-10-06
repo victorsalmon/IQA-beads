@@ -1,19 +1,13 @@
 {
-  "name": "beads-marketplace",
-  "description": "Local marketplace for beads plugin development",
+  "name": "iqa-beads-marketplace",
+  "description": "Marketplace for the IQA-Beads standalone plugin",
   "owner": {
-    "name": "Steve Yegge"
+    "name": "Victor Salmon"
   },
   "plugins": [
     {
-      "name": "beads",
-      "source": "./plugins/beads",
-      "description": "AI-supervised issue tracker for coding workflows",
-      "version": "1.3.0"
-    },
-    {
       "name": "iqa-beads",
-      "source": "./plugins/iqa-beads",
+      "source": ".",
       "description": "Beads-backed Interactive Quality Assurance: live UAT sessions on a dependency-aware issue graph, with Maintain, QA, nightly-mutation, and scheduling runbooks",
       "version": "0.1.0"
     }
