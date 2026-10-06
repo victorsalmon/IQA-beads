@@ -175,6 +175,26 @@ fallback mode it IS the queue.
   stay session-side.
 - **Port-forward keeps bead ids.** Carried beads keep their `2X-` IDs and gain
   `iqa:carried-into=<next>`; only new reports mint numbers in the open epic.
+- **Catch-up runs two steps with one goal: leave the codebase better than it
+  was found.** It executes the sibling `maintain` and `qa` skills (never
+  restated here), scoped as follows:
+  - **Maintain — staleness sweep, everything except testing.** Scope derives
+    from the session's changes: check the most likely locations first
+    (callers, registries, docs, mirrors, indexes), then sweep the codebase
+    for stale references (dead ids, retired names, orphaned docs/branches).
+    Testing is EXCLUDED — stale tests belong to the QA step, not Maintain.
+    Attempt low-hanging-fruit cleanups and small improvements along the way.
+  - **QA — test accuracy rebuild.** Ensure every test is accurate and current,
+    not stale: assertions must match present behavior (names, routes,
+    copy, gates), dead tests go, coverage gaps from the session's changes
+    get tests. Refactor/build what the sweep needs.
+- **Trade-Offs Tipping Point escalation.** If either step concludes the
+  codebase wants a better direction/architecture than incremental cleanup
+  (the tipping point: continued patching costs more than the refactor),
+  the worker does NOT start it — it relays the opinion (what, why, cost
+  of not doing it) to the dispatcher, the dispatcher makes the larger
+  refactor target clear to the user, and a lane is dispatched only with
+  the user's permission.
 
 ## Delegation (Beads additions)
 

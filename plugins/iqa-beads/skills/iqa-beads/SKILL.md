@@ -142,7 +142,12 @@ READY / DEGRADED / BLOCKED), plus:
   `nightly-stryker` task via `scheduling`, then roll the list (`2A` → `2B`).
 - **Catch-up** (half of Close): session-owned deploy-verify first, then one
   detached Maintain+QA worker over validated-terminal items only — no nightly
-  queue, no list roll, no validation flips.
+  queue, no list roll, no validation flips. The worker's goal is leaving the
+  codebase better than found (Maintain: changes-scoped staleness sweep,
+  everything except testing; QA: test accuracy rebuild); a better-direction
+  verdict escalates as a Trade-Offs Tipping Point — relayed to the user, new
+  lane only with permission. Normative scope: [REFERENCE.md](REFERENCE.md) →
+  `## Catch-up (Beads delta)`.
 
 ## Dispatcher mode
 
