@@ -1,4 +1,4 @@
-#requires -Version 7
+﻿#requires -Version 7
 <#
 .SYNOPSIS
     Initialize the IQA2 Beads database for one session (embedded, local-only).
@@ -19,7 +19,7 @@
 .PARAMETER Reuse
     Re-verify an existing `.beads/` database instead of failing.
 .EXAMPLE
-    pwsh Invoke-Iqa2BeadsInit.ps1 -Workdir 'C:\Repos\currents-bookkeeping\.worktrees\dev'
+    pwsh Invoke-Iqa2BeadsInit.ps1 -Workdir "$($env:CL_REPOS_ROOT)\currents-bookkeeping\.worktrees\dev"
 #>
 [CmdletBinding()]
 param(

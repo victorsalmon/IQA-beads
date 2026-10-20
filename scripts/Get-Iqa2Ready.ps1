@@ -1,4 +1,4 @@
-#requires -Version 7
+﻿#requires -Version 7
 <#
 .SYNOPSIS
     Compute the IQA2 ready queue — from the Beads graph, or from the markdown
@@ -26,7 +26,7 @@
     Requires the machine-readable columns (ID, severity, status; see
     REFERENCE.md → Phase 1 tracker contract). Ignores -Workdir's database.
 .EXAMPLE
-    pwsh Get-Iqa2Ready.ps1 -Workdir 'C:\Repos\currents-bookkeeping\.worktrees\dev'
+    pwsh Get-Iqa2Ready.ps1 -Workdir "$($env:CL_REPOS_ROOT)\currents-bookkeeping\.worktrees\dev"
 .EXAMPLE
     pwsh Get-Iqa2Ready.ps1 -TrackerFile "$env:SALMON_RUN_HOME/Tasks/00Handoff/2026-09-28-cbk-iqa2-test-tracker.md"
 #>
